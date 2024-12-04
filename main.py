@@ -4,15 +4,12 @@ def clear(): os.system("cls")
 
 # Function to display the game board
 def print_board(board):
-    # Print column numbers
-    print("  " + " ".join(map(str, range(1, len(board[0]) + 1))))
-    # Print each row with letters (A, B, C...)
-    for i, row in enumerate(board):
+    print("  " + " ".join(map(str, range(1, len(board[0]) + 1))))  # Print column numbers
+    for i, row in enumerate(board):  # Print each row with row labels (A, B, C...)
         print(f"{chr(65 + i)} " + " ".join(row))
 
 # Function to check if a ship can be placed at a certain location
 def is_empty(hidden, row, col, size, direction):
-    # Check if the ship fits in the board and doesn't overlap with other ships
     for i in range(size):
         new_row = row + direction[0] * i
         new_col = col + direction[1] * i
@@ -29,8 +26,7 @@ def ships_location(hidden, ships):
                 row = random.randint(0, len(hidden) - 1)
                 col = random.randint(0, len(hidden[0]) - 1)
                 if is_empty(hidden, row, col, size, direction):
-                    # Place the ship
-                    for i in range(size):
+                    for i in range(size):  # Place the ship
                         hidden[row + direction[0] * i][col + direction[1] * i] = "#"
                     break
 
@@ -38,7 +34,6 @@ def ships_location(hidden, ships):
 def take_turn(board, hidden):
     while True:
         shot = input("Enter your shot (e.g., B5): ").upper()
-        # Validate the input
         if len(shot) >= 2 and shot[0].isalpha() and shot[1:].isdigit():
             row = ord(shot[0]) - 65  # Convert letter to row index
             col = int(shot[1:]) - 1  # Convert number to column index
@@ -46,8 +41,7 @@ def take_turn(board, hidden):
                 break
         print("Invalid input. Try again.")
 
-    # Check if the shot is a hit or miss
-    if hidden[row][col] == "#":
+    if hidden[row][col] == "#":  # Check if the shot is a hit or miss
         board[row][col] = "X"
         hidden[row][col] = "!"  # Mark as hit on hidden board
         print("Hit!")
@@ -58,14 +52,12 @@ def take_turn(board, hidden):
         return False
 
 # Main function to play the game
-def play_game():
+def play_game(name):
     size = 7  # Board size (7x7 grid)
     ships = [(3, 1), (2, 2), (1, 4)]  # List of ships (size, count)
     board = [["."] * size for _ in range(size)]  # Player's board
     hidden = [["."] * size for _ in range(size)]  # Hidden board with ships
 
-    print("Welcome to Battleship!")
-    input("Press Enter to start the game...")
     ships_location(hidden, ships)
 
     shots = 0  # Count the number of shots taken
@@ -79,5 +71,21 @@ def play_game():
     clear()
     print_board(board)
     print(f"Congratulations! You won in {shots} shots!")
+    return shots
 
-play_game()
+def end():
+    leaderboard = []
+
+    while True:
+        clear()
+        player_name = input("Enter your name: ")
+        shots_taken = play_game(player_name)
+        leaderboard.append((player_name, shots_taken))
+
+        if input("Do you want to play again? (yes/no): ").strip().lower() == "no":
+            print("\nLeaderboard:")
+            for rank, (name, shots) in enumerate(sorted(leaderboard, key=lambda x: x[1]), start=1):
+                print(f"{rank}. {name} - {shots} shots")
+            break
+
+end()
