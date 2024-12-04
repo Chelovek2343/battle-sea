@@ -1,54 +1,83 @@
 import random, os
 
-def clear(): os.system("cls" if os.name == "nt" else "clear")
+def clear(): os.system("cls")
 
+# Function to display the game board
 def print_board(board):
+    # Print column numbers
     print("  " + " ".join(map(str, range(1, len(board[0]) + 1))))
-    print("\n".join(f"{chr(65 + i)} " + " ".join(row) for i, row in enumerate(board)))
+    # Print each row with letters (A, B, C...)
+    for i, row in enumerate(board):
+        print(f"{chr(65 + i)} " + " ".join(row))
 
-def is_empty(hidden, r, c, size, o):
-    return all(0 <= r + o[0] * i < len(hidden) and 0 <= c + o[1] * i < len(hidden[0]) 
-               and all(hidden[r + o[0] * i + dr][c + o[1] * i + dc] == "." 
-                       for dr in range(-1, 2) for dc in range(-1, 2) 
-                       if 0 <= r + o[0] * i + dr < len(hidden) and 0 <= c + o[1] * i + dc < len(hidden[0]))
-               for i in range(size))
+# Function to check if a ship can be placed at a certain location
+def is_empty(hidden, row, col, size, direction):
+    # Check if the ship fits in the board and doesn't overlap with other ships
+    for i in range(size):
+        new_row = row + direction[0] * i
+        new_col = col + direction[1] * i
+        if not (0 <= new_row < len(hidden) and 0 <= new_col < len(hidden[0])) or hidden[new_row][new_col] != ".":
+            return False
+    return True
 
-def place_ships(hidden, ships):
+# Function to place ships on the hidden board
+def ships_location(hidden, ships):
     for size, count in ships:
-        for _ in range(count):
+        for _ in range(count):  # Place each ship
             while True:
-                o = random.choice([(0, 1), (1, 0)])
-                r, c = random.randint(0, len(hidden) - 1), random.randint(0, len(hidden[0]) - 1)
-                if is_empty(hidden, r, c, size, o):
-                    for i in range(size): hidden[r + o[0] * i][c + o[1] * i] = "#"
+                direction = random.choice([(0, 1), (1, 0)])  # Horizontal or vertical
+                row = random.randint(0, len(hidden) - 1)
+                col = random.randint(0, len(hidden[0]) - 1)
+                if is_empty(hidden, row, col, size, direction):
+                    # Place the ship
+                    for i in range(size):
+                        hidden[row + direction[0] * i][col + direction[1] * i] = "#"
                     break
 
+# Function to take a turn (player's shot)
 def take_turn(board, hidden):
     while True:
-        shot = input("Enter shot (e.g., B5): ").upper()
+        shot = input("Enter your shot (e.g., B5): ").upper()
+        # Validate the input
         if len(shot) >= 2 and shot[0].isalpha() and shot[1:].isdigit():
-            r, c = ord(shot[0]) - 65, int(shot[1:]) - 1
-            if 0 <= r < len(board) and 0 <= c < len(board[0]) and board[r][c] == ".": break
-        print("Invalid input, try again.")
-    if hidden[r][c] == "#": 
-        board[r][c], hidden[r][c] = "X", "!"
-        print("Hit!" if any("#" in row for row in hidden) else "You sunk the last ship!")
-    else: board[r][c] = "O"; print("Miss!")
-    return all("#" not in row for row in hidden)
+            row = ord(shot[0]) - 65  # Convert letter to row index
+            col = int(shot[1:]) - 1  # Convert number to column index
+            if 0 <= row < len(board) and 0 <= col < len(board[0]) and board[row][col] == ".":
+                break
+        print("Invalid input. Try again.")
 
-def play():
-    size, ships = 7, [(3, 1), (2, 2), (1, 4)]
-    board = [["."] * size for _ in range(size)]
-    hidden = [["."] * size for _ in range(size)]
-    input("Enter your name: ")
-    place_ships(hidden, ships)
-    shots = 0
+    # Check if the shot is a hit or miss
+    if hidden[row][col] == "#":
+        board[row][col] = "X"
+        hidden[row][col] = "!"  # Mark as hit on hidden board
+        print("Hit!")
+        return not any("#" in row for row in hidden)  # Check if all ships are sunk
+    else:
+        board[row][col] = "O"
+        print("Miss!")
+        return False
+
+# Main function to play the game
+def play_game():
+    size = 7  # Board size (7x7 grid)
+    ships = [(3, 1), (2, 2), (1, 4)]  # List of ships (size, count)
+    board = [["."] * size for _ in range(size)]  # Player's board
+    hidden = [["."] * size for _ in range(size)]  # Hidden board with ships
+
+    print("Welcome to Battleship!")
+    input("Press Enter to start the game...")
+    ships_location(hidden, ships)
+
+    shots = 0  # Count the number of shots taken
     while True:
-        clear(); print_board(board)
+        clear()
+        print_board(board)
         shots += 1
-        if take_turn(board, hidden): break
-    clear(); print_board(board)
-    print(f"Victory in {shots} shots!")
+        if take_turn(board, hidden):  # Player's turn
+            break
 
-if name == "main":
-    play()
+    clear()
+    print_board(board)
+    print(f"Congratulations! You won in {shots} shots!")
+
+play_game()
